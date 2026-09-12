@@ -31,9 +31,26 @@ dependencies {
 // Aggregate docs from every module that applies the Dokka plugin (currently done by revenuecat-public-library),
 // so new library modules are documented without having to remember to list them here.
 val dokkaPluginId = libs.plugins.dokka.get().pluginId
+val mavenPublishPluginId = libs.plugins.mavenPublish.get().pluginId
 subprojects {
     plugins.withId(dokkaPluginId) {
         rootProject.dependencies.add("dokka", project)
+    }
+    plugins.withId(mavenPublishPluginId) {
+        if (project.path == ":purchases") {
+            extensions.configure<org.gradle.api.publish.PublishingExtension> {
+                repositories {
+                    maven {
+                        name = "GitHubPackages"
+                        url = uri("https://maven.pkg.github.com/${System.getenv("GITHUB_REPOSITORY") ?: "RevenueCat/purchases-android"}")
+                        credentials {
+                            username = System.getenv("GITHUB_ACTOR") ?: project.findProperty("gpr.user") as? String ?: ""
+                            password = System.getenv("GITHUB_TOKEN") ?: project.findProperty("gpr.key") as? String ?: ""
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
